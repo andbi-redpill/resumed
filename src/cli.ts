@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises'
+import puppeteer from 'puppeteer'
 import sade from 'sade'
 import { red, yellow } from 'yoctocolors'
 import { init, render, validate } from './index.js'
@@ -55,7 +56,15 @@ cli
       }
 
       const rendered = await render(resume, themeModule)
-      await writeFile(output, rendered)
+      if (output.endsWith('.pdf')) {
+        const browser = await puppeteer.launch()
+        const page = await browser.newPage()
+        await page.setContent(rendered, { waitUntil: 'networkidle0' })
+        await page.pdf({ path: output, format: 'a4', printBackground: true })
+        await browser.close()
+      } else {
+        await writeFile(output, rendered)
+      }
 
       console.log(
         `You can find your rendered resume at ${yellow(output)}. Nice work! 🚀`,
