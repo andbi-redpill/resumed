@@ -13,10 +13,18 @@ const pkg = JSON.parse(
 type RenderOptions = {
   output: string
   theme?: string
+  browser_bin?: string
 }
 
 export const cli = sade(pkg.name).version(pkg.version)
 
+function getPuppeter(browser_bin?: string): Promise<puppeteer.Browser> {
+  if (browser_bin) {
+    return puppeteer.launch({ executablePath: browser_bin })
+  } else {
+    return puppeteer.launch()
+  }
+}
 cli
   .command('render [filename]', 'Render resume', {
     alias: 'export',
@@ -24,10 +32,11 @@ cli
   })
   .option('-o, --output', 'Output filename', 'resume.html')
   .option('-t, --theme', 'Theme to use')
+  .option('-b, --browser_bin', 'Chromium executable for puppeteer')
   .action(
     async (
       filename: string = 'resume.json',
-      { output, theme }: RenderOptions,
+      { output, theme, browser_bin }: RenderOptions,
     ) => {
       const resume = JSON.parse(await readFile(filename, 'utf-8'))
 
@@ -57,7 +66,7 @@ cli
 
       const rendered = await render(resume, themeModule)
       if (output.endsWith('.pdf')) {
-        const browser = await puppeteer.launch()
+        const browser = await getPuppeter(browser_bin)
         const page = await browser.newPage()
         await page.setContent(rendered, { waitUntil: 'networkidle0' })
         await page.pdf({ path: output, format: 'a4', printBackground: true })
