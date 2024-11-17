@@ -19,7 +19,7 @@ type RenderOptions = {
 export const cli = sade(pkg.name).version(pkg.version)
 
 function getPuppeter(browser_bin?: string): Promise<puppeteer.Browser> {
-  if (browser_bin) {
+  if (browser_bin && browser_bin.trim().length > 0) {
     return puppeteer.launch({ executablePath: browser_bin })
   } else {
     return puppeteer.launch()
